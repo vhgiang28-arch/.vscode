@@ -78,3 +78,30 @@ print("2. Đánh giá: Khi huấn luyện AI (như Isolation Forest, Random Fore
 print("   dùng Accuracy để đánh giá tổng thể. Phải ưu tiên tối ưu chỉ số Recall và F1-Score")
 print("   để đảm bảo không bỏ sót bất kỳ một giao dịch bất thường rủi ro nào.")
 print("=" * 60)
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Chia dữ liệu (X là các đặc trưng tài chính, y là nhãn gian lận)
+X = df.drop(columns=['class'])
+y = df['class']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Chuẩn hóa đưa dữ liệu về cùng thang đo
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+from sklearn.ensemble import IsolationForest
+from sklearn.metrics import classification_report
+
+# Gọi mô hình Rừng cô lập với tham số tỷ lệ nhiễm bẩn 1%
+iso_forest = IsolationForest(contamination=0.01, random_state=42)
+iso_forest.fit(X_train_scaled)
+
+# Dự đoán giao dịch bất thường trên tập kiểm thử
+y_pred = iso_forest.predict(X_test_scaled)
+# Chuyển đổi nhãn dự đoán của Isolation Forest (-1 là bất thường) về dạng nhãn 0 và 1 giống dữ liệu thô
+y_pred = [1 if x == -1 else 0 for x in y_pred]
+
+# In báo cáo kết quả Precision, Recall, F1-Score cho giảng viên xem
+print("KẾT QUẢ ĐÁNH GIÁ MÔ HÌNH AI:")
+print(classification_report(y_test, y_pred))
